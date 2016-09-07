@@ -8,6 +8,9 @@ import aiohttp
 import discord
 import asyncio
 import traceback
+import random
+import json
+import requests
 
 from discord import utils
 from discord.object import Object
@@ -34,9 +37,10 @@ from .opus_loader import load_opus_lib
 from .constants import VERSION as BOTVERSION
 from .constants import DISCORD_MSG_CHAR_LIMIT, AUDIO_CACHE_PATH
 
-
 load_opus_lib()
 
+william_file = open('sargisson.txt', encoding='utf-8');
+william_lines = william_file.readlines();
 
 class SkipState:
     def __init__(self):
@@ -58,10 +62,11 @@ class SkipState:
 
 
 class Response:
-    def __init__(self, content, reply=False, delete_after=0):
+    def __init__(self, content, reply=False, delete_after=0, tts=False):
         self.content = content
         self.reply = reply
         self.delete_after = delete_after
+        self.tts = tts
 
 
 class MusicBot(discord.Client):
@@ -465,7 +470,9 @@ class MusicBot(discord.Client):
             game = discord.Game(name=name)
 
         await self.change_status(game)
-
+    async def custom_now_playing(self, message):
+        game = discord.Game(name=message)
+        await self.change_status(game)
 
     async def safe_send_message(self, dest, content, *, tts=False, expire_in=0, also_delete=None, quiet=False):
         msg = None
@@ -549,7 +556,6 @@ class MusicBot(discord.Client):
     def run(self):
         try:
             self.loop.run_until_complete(self.start(*self.config.auth))
-
         except discord.errors.LoginFailure:
             # Add if token, else
             raise exceptions.HelpfulError(
@@ -754,7 +760,7 @@ class MusicBot(discord.Client):
 
             helpmsg += ", ".join(commands)
             helpmsg += "```"
-            helpmsg += "https://github.com/SexualRhinoceros/MusicBot/wiki/Commands-list"
+            helpmsg += "https://github.com/EIREXE/AuroraBotNext/wiki/Commands-list"
 
             return Response(helpmsg, reply=True, delete_after=60)
 
@@ -1489,7 +1495,7 @@ class MusicBot(discord.Client):
 
         old_volume = int(player.volume * 100)
 
-        if 0 < new_volume <= 100:
+        if 0 < new_volume:
             player.volume = new_volume / 100.0
 
             return Response('updated volume from %d to %d' % (old_volume, new_volume), reply=True, delete_after=20)
@@ -1750,6 +1756,22 @@ class MusicBot(discord.Client):
             raise exceptions.CommandError(e, expire_in=20)
 
         return Response(":ok_hand:", delete_after=20)
+    async def cmd_norris(self, server, channel, author, permissions, leftover_args, nombre="Chuck", apellido="Norris"):
+        """
+        Usage:
+            {command_prefix}norris [nombre] [apellido]
+
+        Saca a tu Chuck interior.
+        """
+        if len(leftover_args)>0:
+            apellido=leftover_args[0]
+        print(apellido)
+        url = 'http://api.icndb.com/jokes/random?firstName=' + nombre + '&lastName=' + apellido
+
+        resp = requests.get(url=url)
+        data = json.loads(resp.text)
+
+        return Response(data["value"]["joke"], delete_after=20, tts=True)
 
     @owner_only
     async def cmd_setnick(self, server, channel, leftover_args, nick):
@@ -1933,11 +1955,11 @@ class MusicBot(discord.Client):
                 content = response.content
                 if response.reply:
                     content = '%s, %s' % (message.author.mention, content)
-
                 sentmsg = await self.safe_send_message(
                     message.channel, content,
                     expire_in=response.delete_after if self.config.delete_messages else 0,
-                    also_delete=message if self.config.delete_invoking else None
+                    also_delete=message if self.config.delete_invoking else None,
+                    tts=response.tts
                 )
 
         except (exceptions.CommandError, exceptions.HelpfulError, exceptions.ExtractionError) as e:
@@ -2013,5 +2035,6 @@ class MusicBot(discord.Client):
 
 
 if __name__ == '__main__':
+
     bot = MusicBot()
     bot.run()

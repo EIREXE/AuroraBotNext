@@ -1,0 +1,14 @@
+** Mensaje del WillyBot **
+*La que tengo aqui colgada - William Sargisson*
+------
+
+__**!help**__ - Esto.
+__**!darude**__ - Darude Sandstorm.
+__**!william**__ - Frases celebres del willy.
+__**!youtube**__ - Busqueda de youtube.
+__**!hentai **__ - Busca en gelbooru y devuelve un link a la busqueda.
+__**!syncvideo**__ - Linkea la sala del Sync Video.
+
+------
+
+Fin de la Ayuda
